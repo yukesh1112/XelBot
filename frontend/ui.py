@@ -1,3 +1,4 @@
+"""
 import streamlit as st
 import pandas as pd
 import requests
@@ -244,3 +245,4 @@ elif page == "📈 Data Insights":
             st.bar_chart(region_sales)
 
 # ----------------- END -----------------
+"""
