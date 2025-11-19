@@ -17,7 +17,7 @@ dataframe = None
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # ✅ Configure Gemini AI (Replace with actual API Key)
-GEMINI_API_KEY = "AIzaSyChpoedP-et4VJC4gbA80zmWcZyExDMGCQ"
+GEMINI_API_KEY = "AIzaSyA0ePTaWI-Up6oTuG_R_B-Pvave0UwumjM"
 genai.configure(api_key=GEMINI_API_KEY)
 
 # ✅ Define request model for chatbot queries
@@ -60,10 +60,23 @@ def chatbot(query: QueryRequest):
 
     query_text = query.query.lower()
 
-    # ✅ Call Gemini AI for Natural Language Understanding
+    # ✅ Call Gemini AI for Natural Language Understanding with Dataset Context
     try:
-        model = genai.GenerativeModel("gemini-pro")
-        gemini_response = model.generate_content(query.query).text
+        model = genai.GenerativeModel("models/gemini-2.0-flash")
+        
+        # Create dataset context for AI
+        dataset_context = f"""
+DATASET ANALYSIS CONTEXT:
+- Dataset shape: {dataframe.shape[0]} rows, {dataframe.shape[1]} columns
+- Columns: {', '.join(dataframe.columns)}
+- Data types: {dict(dataframe.dtypes)}
+- Sample data: {dataframe.head(2).to_string()}
+
+USER QUESTION: {query.query}
+
+As XelBot, analyze this specific dataset and provide insights based on the actual data shown above. Focus only on what's in this dataset."""
+        
+        gemini_response = model.generate_content(dataset_context).text
     except Exception as e:
         logging.error(f"❌ Gemini AI Error: {str(e)}")
         gemini_response = f"⚠️ Gemini AI Error: {str(e)}"

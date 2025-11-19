@@ -7,7 +7,7 @@ import seaborn as sns
 import os
 
 # ----------------- SETUP GEMINI AI -----------------
-GEMINI_API_KEY = "AIzaSyBhjd38FR2xIOWml7JBFYCixngF1nkQ5zQ"  # 🔥 Replace with actual key
+GEMINI_API_KEY = "AIzaSyA0ePTaWI-Up6oTuG_R_B-Pvave0UwumjM"  # 🔥 Updated API key
 genai.configure(api_key=GEMINI_API_KEY)
 
 # ----------------- STREAMLIT CONFIG -----------------
@@ -70,10 +70,40 @@ elif page == "💬 Chatbot":
         if st.button("Ask XelBot"):
             if question.strip():
                 with st.spinner("Thinking..."):
-                    # Get AI-generated response from Gemini
+                    # Get AI-generated response from Gemini with dataset context
                     try:
-                        model = genai.GenerativeModel("gemini-pro")
-                        gemini_response = model.generate_content(question).text
+                        model = genai.GenerativeModel("models/gemini-2.0-flash")
+                        
+                        # Create dataset summary for AI context
+                        dataset_summary = f"""
+DATASET CONTEXT:
+- Dataset shape: {df.shape[0]} rows, {df.shape[1]} columns
+- Columns: {', '.join(df.columns)}
+- Data types: {dict(df.dtypes)}
+"""
+                        
+                        # Add sample data if dataset is not too large
+                        if len(df) <= 1000:
+                            dataset_summary += f"\nSample data (first 3 rows):\n{df.head(3).to_string()}"
+                        
+                        # Create focused prompt
+                        enhanced_prompt = f"""
+You are XelBot, a data analysis assistant. Analyze the user's question about their specific dataset.
+
+{dataset_summary}
+
+USER QUESTION: {question}
+
+INSTRUCTIONS:
+1. Focus ONLY on the uploaded dataset shown above
+2. Provide specific insights based on the actual data
+3. If the question is about sales/products but the dataset doesn't contain that info, redirect to what the dataset actually contains
+4. Be concise and data-focused
+5. Suggest relevant questions they could ask about their actual data
+
+Answer:"""
+                        
+                        gemini_response = model.generate_content(enhanced_prompt).text
                     except Exception as e:
                         gemini_response = f"⚠️ Gemini AI Error: {str(e)}"
 
@@ -83,46 +113,84 @@ elif page == "💬 Chatbot":
                         numeric_cols = df.select_dtypes(include=["number"]).columns
                         categorical_cols = df.select_dtypes(include=["object"]).columns
 
-                        # Predefined responses based on keywords
-                        if "highest profit" in question.lower():
-                            if "profit" in df.columns:
-                                max_profit = df["profit"].max()
-                                dataset_response = f"💰 The highest profit is **{max_profit}**."
-                            elif "revenue" in df.columns and "cost" in df.columns:
-                                df["profit"] = df["revenue"] - df["cost"]
-                                max_profit = df["profit"].max()
-                                dataset_response = f"💰 Calculated profit: The highest profit is **{max_profit}**."
+                        # Enhanced responses for social media content data
+                        if "content type" in question.lower() or "types" in question.lower():
+                            if "Type" in df.columns:
+                                type_counts = df["Type"].value_counts()
+                                dataset_response = f"📊 Content types: {dict(type_counts)}"
                             else:
-                                dataset_response = "⚠️ Profit data not available."
+                                dataset_response = "⚠️ Content type data not available."
 
-                        elif "average profit" in question.lower():
-                            if "profit" in df.columns:
-                                avg_profit = df["profit"].mean()
-                                dataset_response = f"💰 The average profit is **{avg_profit:.2f}**."
-                            elif "revenue" in df.columns and "cost" in df.columns:
-                                df["profit"] = df["revenue"] - df["cost"]
-                                avg_profit = df["profit"].mean()
-                                dataset_response = f"💰 Calculated average profit: **{avg_profit:.2f}**."
+                        elif "category" in question.lower() or "categories" in question.lower():
+                            if "Category" in df.columns:
+                                category_counts = df["Category"].value_counts().head(5)
+                                dataset_response = f"📈 Top 5 categories: {dict(category_counts)}"
                             else:
-                                dataset_response = "⚠️ Profit data not available."
+                                dataset_response = "⚠️ Category data not available."
 
-                        elif "highest sales" in question.lower():
-                            if "product" in df.columns and "sales" in df.columns:
-                                top_product = df.loc[df["sales"].idxmax(), "product"]
-                                max_sales = df["sales"].max()
-                                dataset_response = f"🏆 The product with the highest sales is **{top_product}** with **{max_sales}** sales."
-                            else:
-                                dataset_response = "⚠️ Sales data not available."
-
-                        elif "most common" in question.lower():
-                            if len(categorical_cols) > 0:
+                        elif "most common" in question.lower() or "popular" in question.lower():
+                            if "Category" in df.columns:
+                                most_common = df["Category"].value_counts().idxmax()
+                                count = df["Category"].value_counts().iloc[0]
+                                dataset_response = f"🏆 Most popular category: **{most_common}** ({count} posts)"
+                            elif len(categorical_cols) > 0:
                                 most_common = df[categorical_cols[0]].value_counts().idxmax()
-                                dataset_response = f"🔍 The most frequent category in column '{categorical_cols[0]}' is **{most_common}**."
+                                dataset_response = f"🔍 Most frequent in '{categorical_cols[0]}': **{most_common}**"
                             else:
                                 dataset_response = "⚠️ No categorical data available."
 
+                        elif "photo" in question.lower() or "video" in question.lower():
+                            if "Type" in df.columns:
+                                type_counts = df["Type"].value_counts()
+                                dataset_response = f"📸 Content breakdown: {dict(type_counts)}"
+                            else:
+                                dataset_response = "⚠️ Content type data not available."
+
+                        elif "columns" in question.lower():
+                            dataset_response = f"📊 Dataset columns: {', '.join(df.columns)}"
+
+                        elif "rows" in question.lower() or "size" in question.lower():
+                            dataset_response = f"📊 Dataset has {len(df)} rows and {len(df.columns)} columns"
+
                         else:
-                            dataset_response = "⚠️ Unable to find a dataset-specific answer. Try a different question."
+                            # Smart general analysis based on question keywords
+                            insights = []
+                            
+                            # Analyze based on question content
+                            if any(word in question.lower() for word in ["analyze", "summary", "overview", "insights"]):
+                                # Comprehensive analysis
+                                analysis_parts = []
+                                
+                                # Content type analysis
+                                if "Type" in df.columns:
+                                    type_counts = df["Type"].value_counts()
+                                    analysis_parts.append(f"Content types: {dict(type_counts)}")
+                                
+                                # Category analysis  
+                                if "Category" in df.columns:
+                                    top_categories = df["Category"].value_counts().head(3)
+                                    analysis_parts.append(f"Top categories: {dict(top_categories)}")
+                                
+                                # URL analysis
+                                if "URL" in df.columns:
+                                    url_count = df["URL"].notna().sum()
+                                    analysis_parts.append(f"Content with URLs: {url_count}/{len(df)}")
+                                
+                                dataset_response = f"📊 Dataset Analysis: {' | '.join(analysis_parts)}"
+                            
+                            else:
+                                # Default insights
+                                if "Type" in df.columns:
+                                    top_type = df["Type"].value_counts().idxmax()
+                                    insights.append(f"Most common content type: {top_type}")
+                                if "Category" in df.columns:
+                                    top_category = df["Category"].value_counts().idxmax()
+                                    insights.append(f"Most popular category: {top_category}")
+                                
+                                if insights:
+                                    dataset_response = f"💡 Quick insights: {' | '.join(insights)}"
+                                else:
+                                    dataset_response = "⚠️ Try asking: 'analyze my dataset' or 'what insights can you provide?'"
 
                     except Exception as e:
                         dataset_response = f"⚠️ Dataset Analysis Error: {str(e)}"

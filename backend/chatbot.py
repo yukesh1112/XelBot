@@ -12,7 +12,7 @@ app = FastAPI()
 dataframe = None
 
 # ✅ Set up Google Gemini AI (Replace with your API Key)
-GEMINI_API_KEY = "AIzaSyBhjd38FR2xIOWml7JBFYCixngF1nkQ5zQ"  # Replace with your actual API key
+GEMINI_API_KEY = "AIzaSyDMoRoUKWBryd7wO8mJy-g1Oidns5GU43A"  # Replace with your actual API key
 genai.configure(api_key=GEMINI_API_KEY)
 
 # ✅ Define request model for chatbot queries
