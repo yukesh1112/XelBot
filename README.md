@@ -201,32 +201,6 @@ def create_custom_chart(df):
 - [ ] **White-label Solution**: Customizable branding
 - [ ] **Mobile App**: iOS/Android companion
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-
-## 🌟 Why Choose XelBot?
-
-| Traditional Data Analyst | XelBot AI |
-|--------------------------|-----------|
-| $80-150/hour | **Free** |
-| Days/weeks for analysis | **Instant** results |
-| Limited availability | **24/7** availability |
-| Human bias | **Objective** analysis |
-| Static reports | **Interactive** insights |
-| One-time analysis | **Continuous** monitoring |
-
----
-
-**🚀 Transform your business with AI-powered data analytics today!**
-
-*Made with ❤️ by the XelBot team*
-
 # 🤖 XelBot – AI-Powered Data Analytics Chatbot
 
 XelBot is an AI-powered data analytics assistant designed to help business owners, shopkeepers, and analysts make sense of their data. Upload a dataset and chat with XelBot in natural language to get insights, visualizations, and statistics — instantly.
